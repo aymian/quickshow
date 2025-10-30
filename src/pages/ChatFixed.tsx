@@ -89,6 +89,9 @@ const ChatFixed = () => {
   useEffect(() => {
     if (!selectedConversation || !user) return;
 
+    // Ensure we are not marked typing when switching into a conversation
+    updateTypingStatus(false);
+
     const typingSubscription = supabase
       .channel(`typing:${selectedConversation}`)
       .on('postgres_changes', {
@@ -104,6 +107,8 @@ const ChatFixed = () => {
       .subscribe();
 
     return () => {
+      // Clear typing state for this conversation on cleanup
+      updateTypingStatus(false);
       typingSubscription.unsubscribe();
     };
   }, [selectedConversation, user]);
@@ -1160,6 +1165,7 @@ const ChatFixed = () => {
                     <Input
                       value={newMessage}
                       onChange={(e) => handleTyping(e.target.value)}
+                      onBlur={() => updateTypingStatus(false)}
                       placeholder="Message..."
                       disabled={isUploading}
                       className="flex-1 bg-gray-800 border-gray-700 h-9 md:h-10 text-sm md:text-base"
