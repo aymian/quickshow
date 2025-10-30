@@ -137,6 +137,9 @@ const Settings = () => {
 
           <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6">
             <h2 className="font-semibold mb-4">Session</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <Button variant="secondary" onClick={() => navigate('/two-auth')}>Enable Two‑Factor Auth</Button>
+            </div>
             <Button onClick={async () => { await signOut(); navigate("/login"); }} className="bg-red-600 hover:bg-red-500">
               Sign out
             </Button>

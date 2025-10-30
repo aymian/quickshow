@@ -4,6 +4,8 @@ import { Play, Star, Calendar, TrendingUp, Sparkles, Info, UserPlus } from "luci
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface MovieCardProps {
   movie: Movie;
@@ -13,6 +15,9 @@ interface MovieCardProps {
 
 const MovieCard = ({ movie, onClick, index }: MovieCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isSeries = (movie as any).media_type === 'tv';
 
   return (
     <motion.div
@@ -120,7 +125,7 @@ const MovieCard = ({ movie, onClick, index }: MovieCardProps) => {
               y: 20
             }}
           >
-            {/* More Details Button */}
+            {/* Primary Action: Play Now if logged in, else More Details */}
             <motion.div
               initial={{ scale: 0, y: 20 }}
               animate={isHovered ? { scale: 1, y: 0 } : { scale: 0, y: 20 }}
@@ -130,16 +135,29 @@ const MovieCard = ({ movie, onClick, index }: MovieCardProps) => {
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClick(movie.id);
+                  if (user) {
+                    navigate(isSeries ? `/series-details/${movie.id}` : `/movie-details/${movie.id}`);
+                  } else {
+                    onClick(movie.id);
+                  }
                 }}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-6 rounded-xl shadow-2xl backdrop-blur-sm border-2 border-white/20 group/btn"
               >
-                <Info className="w-5 h-5 mr-2 group-hover/btn:rotate-12 transition-transform" />
-                More Details
+                {user ? (
+                  <>
+                    <Play className="w-5 h-5 mr-2" />
+                    Play Now
+                  </>
+                ) : (
+                  <>
+                    <Info className="w-5 h-5 mr-2 group-hover/btn:rotate-12 transition-transform" />
+                    More Details
+                  </>
+                )}
               </Button>
             </motion.div>
 
-            {/* Sign Up Free Trial Button */}
+            {/* Secondary Action: Details when logged in, Sign Up otherwise */}
             <motion.div
               initial={{ scale: 0, y: 20 }}
               animate={isHovered ? { scale: 1, y: 0 } : { scale: 0, y: 20 }}
@@ -147,12 +165,28 @@ const MovieCard = ({ movie, onClick, index }: MovieCardProps) => {
               className="w-full"
             >
               <Button
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (user) {
+                    navigate(isSeries ? `/series-details/${movie.id}` : `/movie-details/${movie.id}`);
+                  } else {
+                    navigate('/signup');
+                  }
+                }}
                 variant="outline"
                 className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold py-6 rounded-xl border-2 border-white/30 hover:border-white/50 shadow-xl group/btn"
               >
-                <UserPlus className="w-5 h-5 mr-2 group-hover/btn:scale-110 transition-transform" />
-                Sign Up Free Trial
+                {user ? (
+                  <>
+                    <Info className="w-5 h-5 mr-2" />
+                    More Details
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Sign Up
+                  </>
+                )}
               </Button>
             </motion.div>
 

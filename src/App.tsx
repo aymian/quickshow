@@ -16,6 +16,7 @@ import Premium from "./pages/Premium";
 import AudioCall from "./pages/AudioCall";
 import VideoCall from "./pages/VideoCall";
 import Settings from "./pages/Settings";
+import TwoAuth from "./pages/TwoAuth";
 import Chat from "./pages/ChatFixed";
 import Notifications from "./pages/Notifications";
 import UserDetails from "./pages/UserDetails";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/two-auth" element={<TwoAuth />} />
           <Route path="/audio-call" element={<AudioCall />} />
           <Route path="/video-call" element={<VideoCall />} />
           <Route path="/chat" element={<Chat />} />
