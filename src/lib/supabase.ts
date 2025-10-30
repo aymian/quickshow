@@ -29,7 +29,7 @@ export const authService = {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        emailRedirectTo: `https://quickshow2.netlify.app/onboarding`,
       },
     });
     return { data, error };
@@ -49,7 +49,7 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/google-callback`,
+        redirectTo: `https://quickshow2.netlify.app/google-callback`,
       },
     });
     return { data, error };
