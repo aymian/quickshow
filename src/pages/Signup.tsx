@@ -14,6 +14,7 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +34,29 @@ const Signup = () => {
       toast.success("Check your email for confirmation link!");
     }
     setIsLoading(false);
+  };
+
+  const handleResend = async () => {
+    if (!email || resendCooldown > 0) return;
+    setIsLoading(true);
+    const { error } = await authService.resendConfirmation(email);
+    setIsLoading(false);
+    if (error) {
+      toast.error(error.message || "Failed to resend email");
+      return;
+    }
+    toast.success("Confirmation email resent");
+    setEmailSent(true);
+    setResendCooldown(10);
+    const interval = setInterval(() => {
+      setResendCooldown((s) => {
+        if (s <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
   };
 
   const features = [
@@ -222,6 +246,17 @@ const Signup = () => {
                     <p className="text-sm text-green-400 text-center">
                       ✓ Confirmation email sent! Please check your inbox and click the link to verify your account.
                     </p>
+                    <div className="mt-3 flex justify-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleResend}
+                        disabled={isLoading || resendCooldown > 0}
+                        className="border-gray-700"
+                      >
+                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend email'}
+                      </Button>
+                    </div>
                   </motion.div>
                 )}
 
