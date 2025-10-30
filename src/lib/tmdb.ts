@@ -107,6 +107,21 @@ export const tmdb = {
     ]);
     return { ...details, credits, similar, videos };
   },
+  getTVDetails: async (id: number) => {
+    const [details, credits, similar, videos] = await Promise.all([
+      fetchFromTMDB(`/tv/${id}`),
+      fetchFromTMDB(`/tv/${id}/credits`),
+      fetchFromTMDB(`/tv/${id}/similar`),
+      fetchFromTMDB(`/tv/${id}/videos`)
+    ]);
+    // normalize to movie-like shape (title, release_date)
+    const normalized = {
+      ...details,
+      title: details.name,
+      release_date: details.first_air_date,
+    };
+    return { ...normalized, credits, similar, videos } as any;
+  },
   searchMovies: (query: string) => fetchFromTMDB(`/search/movie?query=${encodeURIComponent(query)}`),
   
   getImageUrl: (path: string, size: 'w500' | 'w780' | 'original' = 'w500') => {
