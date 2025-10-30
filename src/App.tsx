@@ -13,6 +13,8 @@ import GoogleCallback from "./pages/GoogleCallback";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import Premium from "./pages/Premium";
+import AudioCall from "./pages/AudioCall";
+import VideoCall from "./pages/VideoCall";
 import Chat from "./pages/ChatFixed";
 import Notifications from "./pages/Notifications";
 import UserDetails from "./pages/UserDetails";
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/premium" element={<Premium />} />
+          <Route path="/audio-call" element={<AudioCall />} />
+          <Route path="/video-call" element={<VideoCall />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/user/:userId" element={<UserDetails />} />

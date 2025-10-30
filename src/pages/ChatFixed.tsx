@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, ArrowLeft, User, Plus, Search, X, Reply, Paperclip, MoreVertical, Edit2, Trash2, Check, CheckCheck } from "lucide-react";
+import { Send, ArrowLeft, User, Plus, Search, X, Reply, Paperclip, MoreVertical, Edit2, Trash2, Check, CheckCheck, Mic, Square } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -35,6 +35,9 @@ const ChatFixed = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     // Don't redirect immediately, wait for auth to load
@@ -496,6 +499,74 @@ const ChatFixed = () => {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      if (!user || !selectedConversation) return;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e: BlobEvent) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
+        setIsRecording(false);
+        // Reuse file upload logic to send as audio message to 'audio' bucket
+        try {
+          setIsUploading(true);
+          setUploadProgress(0);
+          const fileName = `${user.id}/${Date.now()}.webm`;
+          const progressInterval = setInterval(() => {
+            setUploadProgress(prev => {
+              if (prev >= 90) { clearInterval(progressInterval); return 90; }
+              return prev + 10;
+            });
+          }, 100);
+          const { error: uploadError } = await supabase.storage
+            .from('audio')
+            .upload(fileName, file);
+          clearInterval(progressInterval);
+          setUploadProgress(100);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage
+            .from('audio')
+            .getPublicUrl(fileName);
+          await supabase.from('messages2').insert({
+            conversation_id: selectedConversation,
+            sender_id: user.id,
+            content: 'Voice message',
+            file_url: publicUrl,
+            file_type: 'audio',
+            file_name: 'voice.webm'
+          });
+          loadMessages(selectedConversation);
+          loadConversations();
+          toast.success('Voice message sent');
+          setTimeout(() => { setIsUploading(false); setUploadProgress(0); }, 500);
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to send voice message');
+          setIsUploading(false);
+          setUploadProgress(0);
+        }
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Microphone error', err);
+      toast.error('Microphone permission is required');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !user) return;
@@ -743,6 +814,24 @@ const ChatFixed = () => {
                     <p className="text-xs text-gray-400">
                       {selectedUser.is_online ? 'Active now' : `Last seen ${getLastSeenText(selectedUser.last_seen)}`}
                     </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate(`/audio-call?conv=${selectedConversation}&to=${selectedUser.id}`)}
+                      className="hidden md:inline-flex"
+                    >
+                      Audio Call
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate(`/video-call?conv=${selectedConversation}&to=${selectedUser.id}`)}
+                      className="hidden md:inline-flex"
+                    >
+                      Video Call
+                    </Button>
                   </div>
                 </div>
 
@@ -1044,6 +1133,20 @@ const ChatFixed = () => {
                       onChange={handleFileUpload}
                       className="hidden"
                     />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => (isRecording ? stopRecording() : startRecording())}
+                      disabled={isUploading}
+                      className="h-9 w-9 md:h-10 md:w-10 flex-shrink-0"
+                    >
+                      {isRecording ? (
+                        <Square className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
+                      ) : (
+                        <Mic className="w-4 h-4 md:w-5 md:h-5" />
+                      )}
+                    </Button>
                     <Button
                       type="button"
                       size="icon"
