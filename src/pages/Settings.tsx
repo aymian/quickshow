@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -13,6 +14,10 @@ const Settings = () => {
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [email, setEmail] = useState("");
+  const { theme, setTheme, systemTheme } = useTheme();
+  const [prefNotifications, setPrefNotifications] = useState<boolean>(() => localStorage.getItem('qs_pref_notifications') === 'true');
+  const [prefSounds, setPrefSounds] = useState<boolean>(() => localStorage.getItem('qs_pref_sounds') === 'true');
+  const [prefTypingDots, setPrefTypingDots] = useState<boolean>(() => localStorage.getItem('qs_pref_typing') !== 'false');
 
   useEffect(() => {
     if (user === undefined) {
@@ -60,7 +65,7 @@ const Settings = () => {
           <Button variant="ghost" onClick={() => navigate("/")}>Back</Button>
         </div>
 
-        <div className="grid gap-6 max-w-2xl">
+        <div className="grid gap-6 max-w-3xl">
           <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6">
             <h2 className="font-semibold mb-4">Privacy</h2>
             <div className="flex items-center justify-between">
@@ -69,6 +74,53 @@ const Settings = () => {
                 <p className="text-sm text-gray-400">Only approved followers can see your content</p>
               </div>
               <Switch checked={isPrivate} onCheckedChange={handlePrivacyChange} />
+            </div>
+          </section>
+
+          <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6">
+            <h2 className="font-semibold mb-4">Appearance</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {(['light','dark','system'] as const).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setTheme(opt)}
+                  className={`p-4 rounded-xl border transition-colors ${
+                    (theme || 'system') === opt ? 'border-primary bg-primary/10' : 'border-gray-800 hover:bg-gray-800'
+                  }`}
+                >
+                  <p className="font-medium capitalize">{opt}</p>
+                  {opt === 'system' && (
+                    <p className="text-xs text-gray-400">Current: {(systemTheme as string) || 'auto'}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6">
+            <h2 className="font-semibold mb-4">Preferences</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Notifications</p>
+                  <p className="text-sm text-gray-400">Show in-app alerts</p>
+                </div>
+                <Switch checked={!!prefNotifications} onCheckedChange={(v) => { setPrefNotifications(v); localStorage.setItem('qs_pref_notifications', String(v)); }} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Sounds</p>
+                  <p className="text-sm text-gray-400">Play sound on new message</p>
+                </div>
+                <Switch checked={!!prefSounds} onCheckedChange={(v) => { setPrefSounds(v); localStorage.setItem('qs_pref_sounds', String(v)); }} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Typing indicator</p>
+                  <p className="text-sm text-gray-400">Show three dots while typing</p>
+                </div>
+                <Switch checked={!!prefTypingDots} onCheckedChange={(v) => { setPrefTypingDots(v); localStorage.setItem('qs_pref_typing', String(v)); }} />
+              </div>
             </div>
           </section>
 

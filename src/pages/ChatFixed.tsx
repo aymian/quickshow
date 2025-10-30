@@ -35,6 +35,7 @@ const ChatFixed = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -92,6 +93,16 @@ const ChatFixed = () => {
     // Ensure we are not marked typing when switching into a conversation
     updateTypingStatus(false);
 
+    // Realtime broadcast channel (fallback if RLS blocks postgres_changes)
+    const broadcastChannel = supabase.channel(`typing-broadcast:${selectedConversation}`);
+    broadcastChannel.on('broadcast', { event: 'typing' }, (payload: any) => {
+      if (payload?.user_id !== user.id) {
+        setOtherUserTyping(!!payload?.is_typing);
+      }
+    });
+    broadcastChannel.subscribe();
+    typingChannelRef.current = broadcastChannel;
+
     const typingSubscription = supabase
       .channel(`typing:${selectedConversation}`)
       .on('postgres_changes', {
@@ -110,6 +121,10 @@ const ChatFixed = () => {
       // Clear typing state for this conversation on cleanup
       updateTypingStatus(false);
       typingSubscription.unsubscribe();
+      if (typingChannelRef.current) {
+        typingChannelRef.current.unsubscribe();
+        typingChannelRef.current = null;
+      }
     };
   }, [selectedConversation, user]);
 
@@ -145,6 +160,15 @@ const ChatFixed = () => {
         is_typing: typing,
         updated_at: new Date().toISOString(),
       });
+
+    // Also broadcast typing over Realtime channel so the other user sees it regardless of RLS
+    if (typingChannelRef.current) {
+      typingChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { user_id: user.id, is_typing: typing }
+      });
+    }
   };
 
   const markMessagesAsRead = async (conversationId: string) => {
