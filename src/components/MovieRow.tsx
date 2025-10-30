@@ -55,7 +55,7 @@ const MovieRow = ({ title, movies, onMovieClick }: MovieRowProps) => {
           <motion.div
             initial={{ opacity: 0 }}
             whileHover={{ scale: 1.1 }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity"
           >
             <Button
               variant="ghost"
@@ -88,7 +88,7 @@ const MovieRow = ({ title, movies, onMovieClick }: MovieRowProps) => {
           <motion.div
             initial={{ opacity: 0 }}
             whileHover={{ scale: 1.1 }}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity"
           >
             <Button
               variant="ghost"

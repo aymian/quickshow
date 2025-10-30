@@ -13,8 +13,6 @@ import GoogleCallback from "./pages/GoogleCallback";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import Premium from "./pages/Premium";
-import AudioCall from "./pages/AudioCall";
-import VideoCall from "./pages/VideoCall";
 import Settings from "./pages/Settings";
 import TwoAuth from "./pages/TwoAuth";
 import MovieDetails from "./pages/MovieDetails";
@@ -49,8 +47,6 @@ const App = () => (
           <Route path="/two-auth" element={<TwoAuth />} />
           <Route path="/movie-details/:id" element={<MovieDetails />} />
           <Route path="/series-details/:id" element={<SeriesDetails />} />
-          <Route path="/audio-call" element={<AudioCall />} />
-          <Route path="/video-call" element={<VideoCall />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/user/:userId" element={<UserDetails />} />

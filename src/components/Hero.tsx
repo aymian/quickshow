@@ -156,7 +156,10 @@ const Hero = ({ content, onMovieClick }: HeroProps) => {
                   {/* Play Button - Netflix Style */}
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
-                      onClick={() => onMovieClick(currentMovie.id)}
+                      onClick={() => {
+                        const isSeries = (currentMovie as any).media_type === 'tv';
+                        navigate(isSeries ? `/series-details/${currentMovie.id}` : `/movie-details/${currentMovie.id}`);
+                      }}
                       className="gap-1 md:gap-2 px-4 md:px-8 py-3 md:py-6 bg-white hover:bg-white/90 text-black font-bold rounded-md text-sm md:text-lg shadow-xl"
                     >
                       <Play className="w-4 h-4 md:w-6 md:h-6" fill="black" />

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import QRCode from "qrcode";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 const TwoAuth = () => {
   const navigate = useNavigate();
@@ -13,6 +14,10 @@ const TwoAuth = () => {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [enableEmail, setEnableEmail] = useState<boolean>(true);
   const [enableGithub, setEnableGithub] = useState<boolean>(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState("");
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  let codeReader: BrowserMultiFormatReader | null = null;
 
   useEffect(() => {
     if (user === undefined) {
@@ -34,6 +39,39 @@ const TwoAuth = () => {
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(""));
   }, [secret]);
+
+  const startScan = async () => {
+    try {
+      setScanResult("");
+      setScanning(true);
+      codeReader = new BrowserMultiFormatReader();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setVideoStream(stream);
+      const videoElem = document.getElementById('qr-video') as HTMLVideoElement;
+      videoElem.srcObject = stream;
+      await videoElem.play();
+      const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'qr-video');
+      setScanResult(result.getText());
+    } catch (e) {
+      setScanResult('Failed to scan');
+    } finally {
+      stopScan();
+    }
+  };
+
+  const stopScan = () => {
+    setScanning(false);
+    const videoElem = document.getElementById('qr-video') as HTMLVideoElement | null;
+    if (videoElem) videoElem.pause();
+    if (videoStream) {
+      videoStream.getTracks().forEach(t => t.stop());
+      setVideoStream(null);
+    }
+    if (codeReader) {
+      try { codeReader.reset(); } catch {}
+      codeReader = null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -80,8 +118,15 @@ const TwoAuth = () => {
                 <Input value={secret} readOnly className="bg-gray-800 border-gray-700 mb-3" />
                 <div className="flex gap-3">
                   <Button onClick={() => navigator.clipboard.writeText(secret)} variant="outline" className="border-gray-700">Copy Secret</Button>
-                  <Button className="md:hidden" variant="secondary">Scan</Button>
+                  {!scanning ? (
+                    <Button className="md:hidden" variant="secondary" onClick={startScan}>Scan</Button>
+                  ) : (
+                    <Button className="md:hidden" variant="secondary" onClick={stopScan}>Stop</Button>
+                  )}
                 </div>
+                {scanResult && <p className="text-xs text-green-400 mt-2">Scanned: {scanResult}</p>}
+                {/* Hidden video element for scanning on mobile */}
+                <video id="qr-video" className="mt-3 w-full rounded-lg md:hidden" playsInline muted />
               </div>
             </div>
           </section>
